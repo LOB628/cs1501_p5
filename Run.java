@@ -16,11 +16,11 @@ import java.nio.file.Paths;
 public class Run {
 
     static final String id = "LOB41";
-    static final String baseOutputPath = "outputs_TEST";
+    static final String baseOutputPath = "outputs";
     static final String baseInputPath = "inputs";
 
     public static void main(String[] args) {
-        runOnImage("Ada_lovelace.bmp", 4);
+        runOnDirectory(baseInputPath, 2, 3, 4, 7, 8, 9, 16, 23, 32);
     }
 
     private static String getOutputPath(String name, String... fields) {

@@ -76,14 +76,16 @@ public class ClusteringMapGenerator implements ColorMapGenerator_Inter {
     public Map<Pixel, Pixel> generateColorMap(Pixel[][] pixelArray, Pixel[] initialColorPalette) {
         // Lloyd's algorithm
         Pixel[] colorPalette = initialColorPalette;
-        // HashSet<Pixel[]> priors = new HashSet<>();
-        Pixel[][] previousPalettes = new Pixel[2][colorPalette.length];// [1] should not be checked outside of circular
-                                                                       // hue
-                                                                       // metric
-        if (metric.getClass() == CircularHueMetric.class) {
-            // priors.add(colorPalette);
-            previousPalettes[0] = initialColorPalette.clone();// shallow
-        }
+        HashSet<Pixel[]> priors = new HashSet<>();
+        // Pixel[][] previousPalettes = new Pixel[2][colorPalette.length];// [1] should
+        // not be checked outside of circular
+        // // hue
+        // // metric
+        // if (metric.getClass() == CircularHueMetric.class) {
+        // // priors.add(colorPalette);
+        // previousPalettes[0] = initialColorPalette.clone();// shallow
+        // }
+        priors.add(colorPalette);
 
         if (DEBUG || VERBOSE) {
             System.out.println("Metric is " + metric.getClass());
@@ -108,13 +110,10 @@ public class ClusteringMapGenerator implements ColorMapGenerator_Inter {
             System.out.println("Warning: ClusteringMapGenerator.generateColorMap() empty initialColorPalette");
             return new HashMap<Pixel, Pixel>();
         }
-
-        boolean changed = true;
         int iterations = 0;
         while (iterations < MAX_ITERATIONS) {
 
             // assign clusters
-            changed = false;
             for (int i = 0; i < colorPalette.length; i++) {
                 associatedPixels[i] = new ArrayList<Pixel>();
             }
@@ -144,16 +143,9 @@ public class ClusteringMapGenerator implements ColorMapGenerator_Inter {
                             " colorPalette[" + minIndex + "]: " + colorPalette[minIndex]);
                 }
                 associatedPixels[minIndex].add(p);
-                if (associatedCentroids.get(p) != minIndex) {
-                    changed = true;
-                    associatedCentroids.put(p, minIndex);
-                }
-            }
-            if (!changed) {
-                break;
+                associatedCentroids.put(p, minIndex);
             }
             // update centroids
-            changed = false;
             for (int i = 0; i < colorPalette.length; i++) {
                 int total = 0;
                 int redSum = 0;
@@ -176,43 +168,41 @@ public class ClusteringMapGenerator implements ColorMapGenerator_Inter {
                     int redAvg = redSum / total;
                     int greenAvg = greenSum / total;
                     int blueAvg = blueSum / total;
-                    Pixel newCentroid = new Pixel(redAvg, greenAvg, blueAvg);
-                    if (!newCentroid.equals(colorPalette[i])) {
-                        colorPalette[i] = newCentroid;
-                        changed = true;
-                    }
+                    colorPalette[i] = new Pixel(redAvg, greenAvg, blueAvg);
 
                 }
             }
-            if (!changed) {
-                System.out.println();
+            if (priors.contains(colorPalette)) {
+                if (VERBOSE) {
+                    System.out.println("Palette Repeated breaking!");
+                }
                 break;
             }
-            if (metric.getClass() == CircularHueMetric.class) {
-                boolean different = false;
-                for (int i = 0; i < colorPalette.length; i++) {
-                    if (!colorPalette[i].equals(previousPalettes[0][i])) {
-                        different = true;
-                        break;
-                    }
-                }
-                previousPalettes[0] = previousPalettes[1];
-                previousPalettes[1] = colorPalette.clone();// shallow
+            // if (metric.getClass() == CircularHueMetric.class) {
+            // boolean different = false;
+            // for (int i = 0; i < colorPalette.length; i++) {
+            // if (!colorPalette[i].equals(previousPalettes[0][i])) {
+            // different = true;
+            // break;
+            // }
+            // }
+            // previousPalettes[0] = previousPalettes[1];
+            // previousPalettes[1] = colorPalette.clone();// shallow
 
-                if (!different) {
-                    if (DEBUG || VERBOSE) {
-                        System.out.println("Circular Hue Metric: 2-Cycle Detected");
-                    }
-                    break;
-                }
-                // if (priors.contains(colorPalette)) {
-                // if (VERBOSE) {
-                // System.out.println("Palette Repeated !");
-                // }
-                // break;
-                // }
-                // priors.add(colorPalette);
-            }
+            // if (!different) {
+            // if (DEBUG || VERBOSE) {
+            // System.out.println("Circular Hue Metric: 2-Cycle Detected");
+            // }
+            // break;
+            // }
+            // // if (priors.contains(colorPalette)) {
+            // // if (VERBOSE) {
+            // // System.out.println("Palette Repeated !");
+            // // }
+            // // break;
+            // // }
+            // // priors.add(colorPalette);
+            // }
             if (DEBUG) {
                 System.out.print("colorPalette: ");
                 for (int i = 0; i < colorPalette.length; i++) {
