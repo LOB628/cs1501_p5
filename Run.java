@@ -15,8 +15,8 @@ import java.nio.file.Paths;
 
 public class Run {
 
-    static final String id = "LOB41";
-    static final String baseOutputPath = "outputs";
+    static final String id = "LOB41_With_Tie_Breaker";
+    static final String baseOutputPath = "outputs_TEST";
     static final String baseInputPath = "inputs";
 
     public static void main(String[] args) {
@@ -46,10 +46,12 @@ public class Run {
         String filePath = baseInputPath + "/" + filename;
         ColorMapGenerator_Inter genEuclid = new ClusteringMapGenerator(new SquaredEuclideanMetric());
         ColorQuantizer quantEuclid = new ColorQuantizer(filePath, genEuclid);
-        quantEuclid.quantizeToBMP(getOutputPath(filename_noextension, "euclid", "n" + numColors), numColors);
+        quantEuclid.quantizeToBMP(getOutputPath(filename_noextension, "euclid", "n" +
+                numColors), numColors);
         ColorMapGenerator_Inter genHue = new ClusteringMapGenerator(new CircularHueMetric());
         ColorQuantizer quantHue = new ColorQuantizer(filePath, genHue);
-        quantHue.quantizeToBMP(getOutputPath(filename_noextension, "hue", "n" + numColors), numColors);
+        quantHue.quantizeToBMP(getOutputPath(filename_noextension, "hue", "n" +
+                numColors), numColors);
         ColorMapGenerator_Inter genBucket = new BucketingMapGenerator();
         ColorQuantizer quantBucket = new ColorQuantizer(filePath, genBucket);
         quantBucket.quantizeToBMP(getOutputPath(filename_noextension, "bucket", "n" + numColors), numColors);

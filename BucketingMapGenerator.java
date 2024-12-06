@@ -21,12 +21,12 @@ public class BucketingMapGenerator implements ColorMapGenerator_Inter {
 
     @Override
     public Pixel[] generateColorPalette(Pixel[][] pixelArray, int numColors) {
-        double increment = (double) colorSpace / numColors;
+        double increment = (double) colorSpace / (double) numColors;
         Pixel[] palette = new Pixel[numColors];
-        double base = increment / 2;
+        double base = increment / 2.0;
         for (int i = 0; i < numColors; i++) {
 
-            palette[i] = utils.intToPixel((int) (base + i * increment));
+            palette[i] = utils.intToPixel((int) (base + (double) (i) * increment));
 
         }
 
@@ -86,13 +86,13 @@ public class BucketingMapGenerator implements ColorMapGenerator_Inter {
     @Override
     public Map<Pixel, Pixel> generateColorMap(Pixel[][] pixelArray, Pixel[] initialColorPalette) {
         int numColors = initialColorPalette.length;
-        int increment = colorSpace / numColors;
+        double increment = (double) colorSpace / numColors;
         HashMap<Pixel, Pixel> map = new HashMap<Pixel, Pixel>();
         for (int i = 0; i < pixelArray.length; i++) {
             for (int j = 0; j < pixelArray[0].length; j++) {
                 Pixel p = pixelArray[i][j];
                 int curColor = utils.pixelToInt(p);
-                int bucket = (curColor - increment / 2) / increment;
+                int bucket = (int) (((double) curColor) / increment);
                 Pixel newColor = initialColorPalette[bucket];
                 map.put(p, newColor);
             }
