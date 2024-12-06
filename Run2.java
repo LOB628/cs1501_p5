@@ -1,5 +1,6 @@
 /*
  * @Author: Liam Baird
+ * @Author Irwin Jiang
  * Run the bitmap quantization methods all at once on an image or directory of images
  * Result images are saved to the outputs directory with a structure of
  * outputs/{id}/{filename}/{method}/n{numColors}/{id}_{filename}_{method}_n{numColors}.bmp
@@ -13,17 +14,17 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-public class Run {
+public class Run2 {
 
     static final String id = "LOB41";
-    static final String baseOutputPath = "outputs_TEST";
+    static final String baseOutputPath = "outputs";
     static final String baseInputPath = "inputs";
 
     public static void main(String[] args) {
-        runOnImage("Ada_lovelace.bmp", 4);
+        runOnDirectory(baseInputPath, 2, 3, 4, 7, 8, 9, 16, 23, 32);
     }
 
-    private static String getOutputPath(String name, String... fields) {
+    private static String getOutputPath(String name, boolean bmp, String... fields) {
         String meta = "";
         String path = baseOutputPath + "/" + id + "/" + name;
         for (String field : fields) {
@@ -38,7 +39,12 @@ public class Run {
             System.exit(1);
         }
 
-        return path + "/" + id + "_" + name + "_" + meta + ".bmp";
+        if (bmp) {
+            return path + "/" + id + "_" + name + "_" + meta + ".bmp";
+        } else {
+            return path + "/" + id + "_" + name + "_" + meta + ".txt";
+        }
+
     }
 
     public static void runOnImage(String filename, int numColors) {
@@ -46,13 +52,16 @@ public class Run {
         String filePath = baseInputPath + "/" + filename;
         ColorMapGenerator_Inter genEuclid = new ClusteringMapGenerator(new SquaredEuclideanMetric());
         ColorQuantizer quantEuclid = new ColorQuantizer(filePath, genEuclid);
-        quantEuclid.quantizeToBMP(getOutputPath(filename_noextension, "euclid", "n" + numColors), numColors);
+        quantEuclid.quantizeToBMP(getOutputPath(filename_noextension, true, "euclid", "n" + numColors), numColors);
+        quantEuclid.getColorPalette(getOutputPath(filename_noextension, false, "euclid", "n" + numColors), numColors);
         ColorMapGenerator_Inter genHue = new ClusteringMapGenerator(new CircularHueMetric());
         ColorQuantizer quantHue = new ColorQuantizer(filePath, genHue);
-        quantHue.quantizeToBMP(getOutputPath(filename_noextension, "hue", "n" + numColors), numColors);
+        quantHue.quantizeToBMP(getOutputPath(filename_noextension, true, "hue", "n" + numColors), numColors);
+        quantHue.getColorPalette(getOutputPath(filename_noextension, false, "hue", "n" + numColors), numColors);
         ColorMapGenerator_Inter genBucket = new BucketingMapGenerator();
         ColorQuantizer quantBucket = new ColorQuantizer(filePath, genBucket);
-        quantBucket.quantizeToBMP(getOutputPath(filename_noextension, "bucket", "n" + numColors), numColors);
+        quantBucket.quantizeToBMP(getOutputPath(filename_noextension, true, "bucket", "n" + numColors), numColors);
+        quantBucket.getColorPalette(getOutputPath(filename_noextension, false, "bucket", "n" + numColors), numColors);
     }
 
     public static void runOnDirectory(String dir, int... numColors) {
@@ -66,7 +75,6 @@ public class Run {
                     runOnImage(filename, n);
                 }
             }
-
         }
     }
 

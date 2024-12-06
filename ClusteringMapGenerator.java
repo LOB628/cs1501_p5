@@ -7,7 +7,8 @@ import java.util.Map;
 
 public class ClusteringMapGenerator implements ColorMapGenerator_Inter {
     public static final int MAX_ITERATIONS = 1000;
-    public static boolean DEBUG = false;
+    public boolean DEBUG = false;
+    public boolean VERBOSE = true;
     DistanceMetric_Inter metric;
 
     public ClusteringMapGenerator(DistanceMetric_Inter metric) {
@@ -26,10 +27,12 @@ public class ClusteringMapGenerator implements ColorMapGenerator_Inter {
      */
     @Override
     public Pixel[] generateColorPalette(Pixel[][] pixelArray, int numColors) {
+
         Pixel[] palette = new Pixel[numColors];
         HashSet<Pixel> paletteSet = new HashSet<Pixel>();
         palette[0] = pixelArray[0][0];
         paletteSet.add(palette[0]);
+
         HashSet<Pixel> colors = utils.uniqueColorsSet(pixelArray);
         if (colors.size() < numColors) {
             System.out.println(
@@ -60,7 +63,10 @@ public class ClusteringMapGenerator implements ColorMapGenerator_Inter {
                 palette[i] = centroid;
                 paletteSet.add(centroid);
             } else {
-                System.out.println("Warning: ClusteringMapGenerator.generateColorPalette() failed to find a centroid");
+                if (VERBOSE) {
+                    System.out.println(
+                            "Warning: ClusteringMapGenerator.generateColorPalette() failed to find a centroid");
+                }
             }
         }
         return palette;
@@ -70,6 +76,19 @@ public class ClusteringMapGenerator implements ColorMapGenerator_Inter {
     public Map<Pixel, Pixel> generateColorMap(Pixel[][] pixelArray, Pixel[] initialColorPalette) {
         // Lloyd's algorithm
         Pixel[] colorPalette = initialColorPalette;
+        // HashSet<Pixel[]> priors = new HashSet<>();
+        Pixel[][] previousPalettes = new Pixel[2][colorPalette.length];// [1] should not be checked outside of circular
+                                                                       // hue
+                                                                       // metric
+        if (metric.getClass() == CircularHueMetric.class) {
+            // priors.add(colorPalette);
+            previousPalettes[0] = initialColorPalette.clone();// shallow
+        }
+
+        if (DEBUG || VERBOSE) {
+            System.out.println("Metric is " + metric.getClass());
+        }
+
         @SuppressWarnings("unchecked")
         ArrayList<Pixel>[] associatedPixels = new ArrayList[colorPalette.length];
         HashMap<Pixel, Integer> colorFreq = utils.colorsFreq(pixelArray);
@@ -93,7 +112,7 @@ public class ClusteringMapGenerator implements ColorMapGenerator_Inter {
         boolean changed = true;
         int iterations = 0;
         while (iterations < MAX_ITERATIONS) {
-            iterations++;
+
             // assign clusters
             changed = false;
             for (int i = 0; i < colorPalette.length; i++) {
@@ -104,12 +123,17 @@ public class ClusteringMapGenerator implements ColorMapGenerator_Inter {
                 int minIndex = 0;
                 for (int i = 1; i < colorPalette.length; i++) {
                     if (colorPalette[i] == null) {
-                        System.out
-                                .println("Warning: ClusteringMapGenerator.generateColorMap() null colorPalette value");
+                        if (VERBOSE) {
+                            System.out
+                                    .println(
+                                            "Warning: ClusteringMapGenerator.generateColorMap() null colorPalette value");
+                        }
                         break;// asume there are only null values after this point
                     }
                     double distance = metric.colorDistance(p, colorPalette[i]);
-                    if (distance < minDistance) {
+                    if (distance < minDistance
+                            || (distance == minDistance
+                                    && utils.pixelToInt(colorPalette[minIndex]) < utils.pixelToInt(colorPalette[i]))) {
                         minDistance = distance;
                         minIndex = i;
                     }
@@ -129,6 +153,7 @@ public class ClusteringMapGenerator implements ColorMapGenerator_Inter {
                 break;
             }
             // update centroids
+            changed = false;
             for (int i = 0; i < colorPalette.length; i++) {
                 int total = 0;
                 int redSum = 0;
@@ -151,12 +176,42 @@ public class ClusteringMapGenerator implements ColorMapGenerator_Inter {
                     int redAvg = redSum / total;
                     int greenAvg = greenSum / total;
                     int blueAvg = blueSum / total;
-                    colorPalette[i] = new Pixel(redAvg, greenAvg, blueAvg);
+                    Pixel newCentroid = new Pixel(redAvg, greenAvg, blueAvg);
+                    if (!newCentroid.equals(colorPalette[i])) {
+                        colorPalette[i] = newCentroid;
+                        changed = true;
+                    }
+
                 }
-                // int redAvgRounded = (int) Math.round((double) redSum / total);
-                // int greenAvgRounded = (int) Math.round((double) greenSum / total);
-                // int blueAvgRounded = (int) Math.round((double) blueSum / total);
-                // colorPalette[i] = new Pixel(redAvgRounded, greenAvgRounded, blueAvgRounded);
+            }
+            if (!changed) {
+                System.out.println();
+                break;
+            }
+            if (metric.getClass() == CircularHueMetric.class) {
+                boolean different = false;
+                for (int i = 0; i < colorPalette.length; i++) {
+                    if (!colorPalette[i].equals(previousPalettes[0][i])) {
+                        different = true;
+                        break;
+                    }
+                }
+                previousPalettes[0] = previousPalettes[1];
+                previousPalettes[1] = colorPalette.clone();// shallow
+
+                if (!different) {
+                    if (DEBUG || VERBOSE) {
+                        System.out.println("Circular Hue Metric: 2-Cycle Detected");
+                    }
+                    break;
+                }
+                // if (priors.contains(colorPalette)) {
+                // if (VERBOSE) {
+                // System.out.println("Palette Repeated !");
+                // }
+                // break;
+                // }
+                // priors.add(colorPalette);
             }
             if (DEBUG) {
                 System.out.print("colorPalette: ");
@@ -165,11 +220,13 @@ public class ClusteringMapGenerator implements ColorMapGenerator_Inter {
                 }
                 System.out.println();
             }
+            iterations++;
         }
         if (iterations == MAX_ITERATIONS) {
-            System.out.println("Warning: ClusteringMapGenerator.generateColorMap() reached MAX_ITERATIONS");
+            System.out.println(
+                    "Warning: ClusteringMapGenerator.generateColorMap() stopped at MAX_ITERATIONS:" + MAX_ITERATIONS);
         }
-        if (DEBUG) {
+        if (DEBUG || VERBOSE) {
             System.out.println("iterations: " + iterations);
         }
         HashMap<Pixel, Pixel> colorMap = new HashMap<Pixel, Pixel>();
@@ -178,6 +235,7 @@ public class ClusteringMapGenerator implements ColorMapGenerator_Inter {
                 colorMap.put(p, colorPalette[i]);
             }
         }
+
         return colorMap;
     }
 

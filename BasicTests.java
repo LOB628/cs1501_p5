@@ -112,7 +112,7 @@ class BasicTests {
     @DisplayName("Basic quantizeTo2DArray")
     void basic_quantize_2d_array() {
         Pixel[][] stripedArr = genStripedArr();
-        Util.savePixelMatrixToBitmap("test_input.bmp", stripedArr);
+        // Util.savePixelMatrixToBitmap("test_input.bmp", stripedArr);
         dm = new SquaredEuclideanMetric();
         generator = new ClusteringMapGenerator(dm);
         cq = new ColorQuantizer(stripedArr, generator);
@@ -137,7 +137,7 @@ class BasicTests {
                 new Pixel(200, 200, 200),
                 new Pixel(250, 250, 250)
         };
-        Util.savePixelMatrixToBitmap("test_output.bmp", result);
+        // Util.savePixelMatrixToBitmap("test_output.bmp", result);
         int expected = 0;
         for (int row = 0; row < stripedArr.length; row++) {
             for (int col = 0; col < stripedArr[0].length; col++) {

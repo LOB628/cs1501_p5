@@ -47,46 +47,56 @@ public class BucketingMapGenerator implements ColorMapGenerator_Inter {
      * @return A Map that maps each distinct color in pixelArray to a final
      *         color
      */
+    // @Override
+    // public Map<Pixel, Pixel> generateColorMap(Pixel[][] pixelArray, Pixel[]
+    // initialColorPalette) {
+    // // initialColorPalette can only take inputs from generateColorPalette
+    // int[] palette = new int[initialColorPalette.length];
+    // for (int i = 0; i < initialColorPalette.length; i++) {
+    // palette[i] = utils.pixelToInt(initialColorPalette[i]);
+    // }
+    // Arrays.sort(palette);
+    // HashSet<Pixel> colors = utils.uniqueColorsSet(pixelArray);
+    // HashMap<Pixel, Pixel> map = new HashMap<Pixel, Pixel>();
+    // boolean flag;
+    // for (Pixel color : colors) {
+    // int colorInt = utils.pixelToInt(color);
+    // flag = false;
+    // int upperBound = 0;
+    // // O(k) instead of O(log(k))
+    // for (int i = 0; i < initialColorPalette.length; i++) {
+    // int lowerBound = upperBound;// just use the previous
+    // upperBound = i == initialColorPalette.length - 1 ? colorSpace
+    // : palette[i] + (palette[i + 1] - palette[i]) / 2;
+
+    // if (colorInt >= lowerBound && colorInt < upperBound) {
+    // map.put(color, initialColorPalette[i]);
+    // flag = true;
+    // break;
+    // }
+    // }
+    // if (!flag) {
+    // System.out.println("BUCKET FAILURE");
+    // }
+    // }
+
+    // return map;
+    // }
+
     @Override
     public Map<Pixel, Pixel> generateColorMap(Pixel[][] pixelArray, Pixel[] initialColorPalette) {
-        int[] palette = new int[initialColorPalette.length];
-        for (int i = 0; i < initialColorPalette.length; i++) {
-            palette[i] = utils.pixelToInt(initialColorPalette[i]);
-        }
-        Arrays.sort(palette);
-        HashSet<Pixel> colors = utils.uniqueColorsSet(pixelArray);
+        int numColors = initialColorPalette.length;
+        int increment = colorSpace / numColors;
         HashMap<Pixel, Pixel> map = new HashMap<Pixel, Pixel>();
-        for (Pixel color : colors) {
-            int colorInt = utils.pixelToInt(color);
-            for (int i = 0; i < initialColorPalette.length; i++) {
-
-                int lowerBound = i == 0 ? 0 : palette[i] - (palette[i] - palette[i - 1]) / 2;
-                int upperBound = i == initialColorPalette.length - 1 ? colorSpace
-                        : palette[i] + (palette[i + 1] - palette[i]) / 2;
-                if (colorInt >= lowerBound && colorInt < upperBound) {
-                    map.put(color, initialColorPalette[i]);
-                    break;
-                }
+        for (int i = 0; i < pixelArray.length; i++) {
+            for (int j = 0; j < pixelArray[0].length; j++) {
+                Pixel p = pixelArray[i][j];
+                int curColor = utils.pixelToInt(p);
+                int bucket = (curColor - increment / 2) / increment;
+                Pixel newColor = initialColorPalette[bucket];
+                map.put(p, newColor);
             }
         }
         return map;
     }
-
-    // @Override
-    // public Map<Pixel, Pixel> generateColorMap(Pixel[][] pixelArray, Pixel[]
-    // initialColorPalette) {
-    // int numColors = initialColorPalette.length;
-    // int increment = colorSpace / numColors;
-    // HashMap<Pixel, Pixel> map = new HashMap<Pixel, Pixel>();
-    // for (int i = 0; i < pixelArray.length; i++) {
-    // for (int j = 0; j < pixelArray[0].length; j++) {
-    // Pixel p = pixelArray[i][j];
-    // int curColor = utils.pixelToInt(p);
-    // int bucket = (curColor - increment / 2) / increment;
-    // Pixel newColor = initialColorPalette[bucket];
-    // map.put(p, newColor);
-    // }
-    // }
-    // return map;
-    // }
 }

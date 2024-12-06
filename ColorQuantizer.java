@@ -1,6 +1,8 @@
 package cs1501_p5;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Map;
@@ -63,5 +65,23 @@ public class ColorQuantizer implements ColorQuantizer_Inter {
     @Override
     public void quantizeToBMP(String fileName, int numColors) {
         Util.savePixelMatrixToBitmap(fileName, quantizeTo2DArray(numColors));
+    }
+
+    public void getColorPalette(String fileName, int numColors) {
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter(fileName));
+
+            Pixel[] colorPalette = gen.generateColorPalette(pixelArray, numColors);
+            for (Pixel p : colorPalette) {
+                String color = p == null ? "null" : p.toString();
+                writer.write(color);
+                writer.newLine();
+            }
+
+            writer.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
