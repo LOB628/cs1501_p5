@@ -39,7 +39,7 @@ public class ClusteringMapGenerator implements ColorMapGenerator_Inter {
                     "Warning: ClusteringMapGenerator.generateColorPalette() fewer unique colors than numColors");
         }
         for (int i = 1; i < numColors; i++) {
-            Pixel centroid = null;
+            Pixel maxCentroid = null;
             double maxDistance = -1;
             for (Pixel p : colors) {
                 if (paletteSet.contains(p)) {
@@ -58,14 +58,14 @@ public class ClusteringMapGenerator implements ColorMapGenerator_Inter {
                 }
                 if (centroidMinDistance > maxDistance
                         || (centroidMinDistance == maxDistance
-                                && utils.pixelToInt(p) > utils.pixelToInt(centroid))) {
+                                && utils.pixelToInt(p) > utils.pixelToInt(maxCentroid))) {
                     maxDistance = centroidMinDistance;
-                    centroid = p;
+                    maxCentroid = p;
                 }
             }
             if (maxDistance != -1) {
-                palette[i] = centroid;
-                paletteSet.add(centroid);
+                palette[i] = maxCentroid;
+                paletteSet.add(maxCentroid);
             } else {
                 if (VERBOSE) {
                     System.out.println(
